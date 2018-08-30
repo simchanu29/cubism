@@ -76,7 +76,7 @@ class Installer:
     def __init__(self, win):
         self.tasks = {}
         self.max_priority = 0
-        self.tasks_root = os.path.realpath(__file__)[:-len("setup.py")]+"/tasks"
+        self.tasks_root = os.path.realpath(__file__)[:-len("cubism.py")]+"/tasks"
 
         # import task list
         self.import_task_list(win)
