@@ -3,6 +3,8 @@
 
 Graphical user interface in python with curses to manage installation, uninstallation and installations check from a command line.
 
+![Status](https://img.shields.io/badge/Status-In%20Development-red.svg)
+
 ### Usage
 
 To launch it :
@@ -18,3 +20,7 @@ To add new scripts :
     - `do.sh` called at installations
     - `undo.sh` called at uninstallation
     - `check.sh` called when you want to know if the task has been properly done.
+
+### Troubleshooting
+
+If the script throw an error, the terminal window may be too small.
