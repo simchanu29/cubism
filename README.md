@@ -3,7 +3,7 @@
 
 Graphical user interface in python with curses to manage installation, uninstallation and installations check from a command line.
 
-![Status](https://img.shields.io/badge/Status-In%20Development-red.svg)
+![Status](https://img.shields.io/github/release/qubyte/rubidium/all.svg)
 
 ### Usage
 
