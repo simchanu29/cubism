@@ -9,3 +9,12 @@ To launch it :
 ```python
 python cubism.py
 ```
+
+### Configuration
+
+To add new scripts :
+ 1. create a folder inside tasks and name it after the task you want the script to perform
+ 2. create 3 scripts inside this new folder : `do.sh`, `undo.sh`, `check.sh`
+    - `do.sh` called at installations
+    - `undo.sh` called at uninstallation
+    - `check.sh` called when you want to know if the task has been properly done.
