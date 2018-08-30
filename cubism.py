@@ -43,7 +43,7 @@ class Task:
         self.dic[name]['mode'] = (self.dic[name]['mode'] + 1) % 3
         self.dic[name]['todo'] = (self.dic[name]['mode'] > 0)
         self.dic[name]['ask'] = (self.dic[name]['mode'] == 1)
-        self.win.addstr(0,0,str(self.dic[name]['mode']))
+        self.win.addstr(0,0,str(self.dic[name]['mode'])[:self.win.width-1])
         # 0, F, F
         # 1, T, T
         # 2, T, F
@@ -251,8 +251,8 @@ class Gui:
 
     def draw_startmenu(self, win):
         # Declaration of strings
-        title = "Raspberry install manager"[:self.width-1]
-        subtitle = "by Simon CHANU"[:self.width-1]
+        title = "Raspberry install manager"[:win.width-1]
+        subtitle = "by Simon CHANU"[:win.width-1]
 
         # Centering calculations
         start_x_title = int((win.width // 2) - (len(title) // 2) - len(title) % 2)
@@ -301,7 +301,8 @@ class Gui:
         for choice in list_menu:
             if self.highlighted_choice is choice:
                 win.win.attron(curses.color_pair(3))
-            win.win.addstr(list_dic[choice][0], list_dic[choice][1], "- " + choice + " -")
+            menu_str = ("- " + choice + " -")[:win.width - 1]
+            win.win.addstr(list_dic[choice][0], list_dic[choice][1], menu_str)
             if self.highlighted_choice is choice:
                 win.win.attroff(curses.color_pair(3))
 
@@ -357,21 +358,22 @@ class Gui:
 
             if self.highlighted_choice is task.name:
                 win.win.attron(curses.color_pair(3))
-            win.win.addstr(idx + 2, 2, "["+str(task.priority)+"] - ["+check+"] - " + task.name)
+            task_str = "[{}] - [{}] - {}".format(task.priority, check, task.name)[:win.width - 1]
+            win.win.addstr(idx + 2, 2, task_str)
             if self.highlighted_choice is task.name:
                 win.win.attroff(curses.color_pair(3))
 
         # Render cancel
         if self.highlighted_choice is list_menu[0]:
             win.win.attron(curses.color_pair(3))
-        win.win.addstr(win.height - 3, win.center_x - 15, list_menu[0])
+        win.win.addstr(win.height - 3, win.center_x - 15, list_menu[0][:win.width - 1])
         if self.highlighted_choice is list_menu[0]:
             win.win.attroff(curses.color_pair(3))
 
         # Render execute
         if self.highlighted_choice is list_menu[1]:
             win.win.attron(curses.color_pair(3))
-        win.win.addstr(win.height - 3, win.center_x + 15, list_menu[1])
+        win.win.addstr(win.height - 3, win.center_x + 15, list_menu[1][:win.width - 1])
         if self.highlighted_choice is list_menu[1]:
             win.win.attroff(curses.color_pair(3))
 
@@ -379,20 +381,20 @@ class Gui:
 
         win.win.attron(curses.color_pair(1))
         help_width = 39
-        win.win.addstr(1, win.width - help_width,  " __________________________________")
-        win.win.addstr(2, win.width - help_width,  "| Help                             |")
-        win.win.addstr(3, win.width - help_width,  "|                                  |")
-        win.win.addstr(4, win.width - help_width,  "| ENTER : cycle mode on task       |")
-        win.win.addstr(5, win.width - help_width,  "| [ ] : won't be executed          |")
-        win.win.addstr(6, win.width - help_width,  "| [x] : will be executed with user |")
-        win.win.addstr(7, win.width - help_width,  "|       prompt at the end          |")
-        win.win.addstr(8, win.width - help_width,  "| [o] : will be executed without   |")
-        win.win.addstr(9, win.width - help_width,  "|       user prompt at the end     |")
-        win.win.addstr(10, win.width - help_width, "| Tasks will be executed in a      |")
-        win.win.addstr(11, win.width - help_width, "| decreasing priority order        |")
-        win.win.addstr(12, win.width - help_width, "| The highest the priority is, the |")
-        win.win.addstr(13, win.width - help_width, "| soonest it is executed           |")
-        win.win.addstr(14, win.width - help_width, "|__________________________________|")
+        win.win.addstr(1, win.width - help_width,  (" __________________________________")[:win.width-1])
+        win.win.addstr(2, win.width - help_width,  ("| Help                             |")[:win.width-1])
+        win.win.addstr(3, win.width - help_width,  ("|                                  |")[:win.width-1])
+        win.win.addstr(4, win.width - help_width,  ("| ENTER : cycle mode on task       |")[:win.width-1])
+        win.win.addstr(6, win.width - help_width,  ("| [x] : will be executed with user |")[:win.width-1])
+        win.win.addstr(5, win.width - help_width,  ("| [ ] : won't be executed          |")[:win.width-1])
+        win.win.addstr(7, win.width - help_width,  ("|       prompt at the end          |")[:win.width-1])
+        win.win.addstr(8, win.width - help_width,  ("| [o] : will be executed without   |")[:win.width-1])
+        win.win.addstr(9, win.width - help_width,  ("|       user prompt at the end     |")[:win.width-1])
+        win.win.addstr(10, win.width - help_width, ("| Tasks will be executed in a      |")[:win.width-1])
+        win.win.addstr(11, win.width - help_width, ("| decreasing priority order        |")[:win.width-1])
+        win.win.addstr(12, win.width - help_width, ("| The highest the priority is, the |")[:win.width-1])
+        win.win.addstr(13, win.width - help_width, ("| soonest it is executed           |")[:win.width-1])
+        win.win.addstr(14, win.width - help_width, ("|__________________________________|")[:win.width-1])
         win.win.attroff(curses.color_pair(1))
 
     def draw(self, screen, *args):
