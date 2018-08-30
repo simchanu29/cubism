@@ -430,6 +430,8 @@ class Gui:
     def start_menu(self):
         self.tasktitle = "Start Menu"
 
+        if self.k == curses.KEY_RESIZE:
+            self.draw(self.header, self.draw_startmenu)
         self.draw(self.body, self.draw_listmenu)
         self.draw(self.footer, self.draw_statusbar)
 
@@ -441,6 +443,8 @@ class Gui:
         self.request = request
         self.tasktitle = request
 
+        if self.k == curses.KEY_RESIZE:
+            self.draw(self.header, self.draw_startmenu)
         self.draw(self.body, self.draw_requestmenu)
         self.draw(self.footer, self.draw_statusbar)
 
