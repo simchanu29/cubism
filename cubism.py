@@ -191,16 +191,16 @@ class Gui:
         width = self.width - 1
         self.header = Window(height, width, begin_y, begin_x, name="header")
 
-        begin_x = 1
+        begin_x = 0
         begin_y = 3
-        height = self.height - 6
-        width = self.width - 3
+        height = self.height - 4
+        width = self.width
         self.body = Window(height, width, begin_y, begin_x, name="body")
 
         begin_x = 0
-        begin_y = self.height - 2
+        begin_y = self.height - 1
         height = 1
-        width = self.width - 1
+        width = self.width
         self.footer = Window(height, width, begin_y, begin_x, name="footer")
 
         self.installer = Installer(self.body.win)
@@ -240,12 +240,13 @@ class Gui:
 
     def draw_statusbar(self, win):
         # Declaration of strings
-        statusbarstr = "Press 'q' to exit | Internet : {} | Admin rights : {} | Current task : {}".format(self.connectivity, self.admin_rights, self.tasktitle)
+        statusbar_info = "Exit: press 'q' | Internet: {} | Admin: {} | Info: {}".format(self.connectivity, self.admin_rights, self.tasktitle)
+        statusbar_blank = " " * (win.width - len(statusbar_info) - 1)
+        statusbar_str = (statusbar_info + statusbar_blank)[:(win.width - 1)]
 
         # Render status bar
         win.win.attron(curses.color_pair(3))
-        win.win.addstr(max(0, win.height-1), 0, statusbarstr)
-        win.win.addstr(max(0, win.height-1), len(statusbarstr), " " * (win.width - len(statusbarstr) - 1))
+        win.win.addstr(max(0, win.height-1), 0, statusbar_str)
         win.win.attroff(curses.color_pair(3))
 
     def draw_startmenu(self, win):
