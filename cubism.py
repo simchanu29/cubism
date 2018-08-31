@@ -1,16 +1,39 @@
+#!/usr/bin/python
+# Author : Simon CHANU
+# python2 and python3 compatible
+
+"""
+   Copyright 2018 Simon CHANU
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
+
 import sys, os
 import curses
 import ctypes
 import urllib2
 import time
 import subprocess
+import sys
+import yaml
 
+configPath = None
 
 def check_is_admin():
     is_admin = (os.getuid() == 0)
     str_is_admin = "not"
 
-    # print "Script {} connected to internet".format(str_is_admin)
+    # print("Script {} connected to internet".format(str_is_admin)
     return (os.getuid() == 0)
 
 
@@ -43,7 +66,8 @@ class Task:
         self.dic[name]['mode'] = (self.dic[name]['mode'] + 1) % 3
         self.dic[name]['todo'] = (self.dic[name]['mode'] > 0)
         self.dic[name]['ask'] = (self.dic[name]['mode'] == 1)
-        self.win.addstr(0,0,str(self.dic[name]['mode']))
+        # h, w = self.win.getmaxyx()
+        # self.win.addstr(0,0,str(self.dic[name]['mode'])[:w-1])
         # 0, F, F
         # 1, T, T
         # 2, T, F
@@ -61,8 +85,8 @@ class Task:
         subprocess.call(self.path+'/do.sh', shell=True)
 
         str_end = '[INSTALLER] Task '+str(self.name)+' finished, press key to continue'
-        print '_'*len(str_end)+'\n'
-        print str_end
+        print('_'*len(str_end)+'\n')
+        print(str_end)
 
         curses.reset_prog_mode()
 
@@ -73,10 +97,22 @@ class Task:
         pass
 
 class Installer:
-    def __init__(self, win):
+    def __init__(self, win, configPath=None):
         self.tasks = {}
         self.max_priority = 0
         self.tasks_root = os.path.realpath(__file__)[:-len("cubism.py")]+"/tasks"
+        self.config = None
+
+        # import config
+        if configPath is not None:
+            try:
+                stream = open(configPath, 'r')
+                self.config = yaml.load(stream)
+                stream.close()
+            except (yaml.YAMLError, IOError) as e:
+                self.config = None
+                stream.close()
+                pass
 
         # import task list
         self.import_task_list(win)
@@ -110,6 +146,13 @@ class Installer:
         task_list = os.listdir(self.tasks_root)
         for task in task_list:
             self.tasks[task] = Task(task, self.tasks_root+"/"+task, win)
+            if self.config is not None:
+                if (task in self.config):
+                    for function in ['do', 'undo', 'check']:
+                        if (function in self.config[task]):
+                            for attr in ['mode', 'todo', 'aks']:
+                                if (attr in self.config[task][function]):
+                                    self.tasks[task].dic[function][attr] = self.config[task][function][attr]
 
 
 class Window:
@@ -136,8 +179,8 @@ class Window:
         try:
             self.win.mvwin(self.y, self.x)
         except Exception:
-            print "Valeurs x et y :", self.y, self.x
-            print "Valeurs w et h :", self.width, self.height
+            print("Valeurs x et y : {}, {}".format(self.y, self.x))
+            print("Valeurs w et h : {}, {}".format(self.width, self.height))
 
             k = self.win.getch()
             while (k != ord('q')):
@@ -191,19 +234,19 @@ class Gui:
         width = self.width - 1
         self.header = Window(height, width, begin_y, begin_x, name="header")
 
-        begin_x = 1
+        begin_x = 0
         begin_y = 3
-        height = self.height - 6
-        width = self.width - 3
+        height = self.height - 4
+        width = self.width
         self.body = Window(height, width, begin_y, begin_x, name="body")
 
         begin_x = 0
-        begin_y = self.height - 2
+        begin_y = self.height - 1
         height = 1
-        width = self.width - 1
+        width = self.width
         self.footer = Window(height, width, begin_y, begin_x, name="footer")
 
-        self.installer = Installer(self.body.win)
+        self.installer = Installer(self.body.win, configPath)
         self.run()
 
     def run(self):
@@ -240,18 +283,19 @@ class Gui:
 
     def draw_statusbar(self, win):
         # Declaration of strings
-        statusbarstr = "Press 'q' to exit | Internet : {} | Admin rights : {} | Current task : {}".format(self.connectivity, self.admin_rights, self.tasktitle)
+        statusbar_info = "Exit: press 'q' | Internet: {} | Admin: {} | Info: {}".format(self.connectivity, self.admin_rights, self.tasktitle)
+        statusbar_blank = " " * (win.width - len(statusbar_info) - 1)
+        statusbar_str = (statusbar_info + statusbar_blank)[:(win.width - 1)]
 
         # Render status bar
         win.win.attron(curses.color_pair(3))
-        win.win.addstr(max(0, win.height-1), 0, statusbarstr)
-        win.win.addstr(max(0, win.height-1), len(statusbarstr), " " * (win.width - len(statusbarstr) - 1))
+        win.win.addstr(max(0, win.height-1), 0, statusbar_str)
         win.win.attroff(curses.color_pair(3))
 
     def draw_startmenu(self, win):
         # Declaration of strings
-        title = "Raspberry install manager"[:self.width-1]
-        subtitle = "by Simon CHANU"[:self.width-1]
+        title = "CuBISM"[:win.width-1]
+        subtitle = "Curses Bash Install Scripts Manager"[:win.width-1]
 
         # Centering calculations
         start_x_title = int((win.width // 2) - (len(title) // 2) - len(title) % 2)
@@ -268,7 +312,7 @@ class Gui:
         win.win.attroff(curses.color_pair(2))
         win.win.attroff(curses.A_BOLD)
 
-        # Print rest of text
+        # print(rest of text
         win.win.addstr(1, start_x_subtitle, subtitle)
         win.win.addstr(2, (win.width // 2) - 2, '-' * 4)
 
@@ -300,9 +344,20 @@ class Gui:
         for choice in list_menu:
             if self.highlighted_choice is choice:
                 win.win.attron(curses.color_pair(3))
-            win.win.addstr(list_dic[choice][0], list_dic[choice][1], "- " + choice + " -")
+            menu_str = ("- " + choice + " -")[:win.width - 1]
+            win.win.addstr(list_dic[choice][0], list_dic[choice][1], menu_str)
             if self.highlighted_choice is choice:
                 win.win.attroff(curses.color_pair(3))
+
+        # Render help
+        win.win.attron(curses.color_pair(1))
+        height = win.height - 2
+        x_offset = 22
+        win.win.addstr(height - 3, win.center_x - x_offset, (" _____________________________________________" )[:win.width-1])
+        win.win.addstr(height - 2, win.center_x - x_offset, ("| To import a config file, add its path as an |")[:win.width-1])
+        win.win.addstr(height - 1, win.center_x - x_offset, ("| argument to CuBISM                          |")[:win.width-1])
+        win.win.addstr(height, win.center_x - x_offset,     ("|_____________________________________________|")[:win.width-1])
+        win.win.attroff(curses.color_pair(1))
 
     def draw_responsemenu(self, win):
         # Ce sont les taches qui vont remplir ce menu
@@ -312,7 +367,7 @@ class Gui:
         win.win.move(self.cursor_x, self.cursor_y)
 
     def draw_requestmenu(self, win):
-        list_menu = ['cancel', 'execute']
+        list_menu = ['main menu', 'execute']
 
         win.win.border()
 
@@ -356,21 +411,22 @@ class Gui:
 
             if self.highlighted_choice is task.name:
                 win.win.attron(curses.color_pair(3))
-            win.win.addstr(idx + 2, 2, "["+str(task.priority)+"] - ["+check+"] - " + task.name)
+            task_str = "[{}] - [{}] - {}".format(task.priority, check, task.name)[:win.width - 1]
+            win.win.addstr(idx + 2, 2, task_str)
             if self.highlighted_choice is task.name:
                 win.win.attroff(curses.color_pair(3))
 
         # Render cancel
         if self.highlighted_choice is list_menu[0]:
             win.win.attron(curses.color_pair(3))
-        win.win.addstr(win.height - 3, win.center_x - 15, list_menu[0])
+        win.win.addstr(win.height - 3, win.center_x - 15, list_menu[0][:win.width - 1])
         if self.highlighted_choice is list_menu[0]:
             win.win.attroff(curses.color_pair(3))
 
         # Render execute
         if self.highlighted_choice is list_menu[1]:
             win.win.attron(curses.color_pair(3))
-        win.win.addstr(win.height - 3, win.center_x + 15, list_menu[1])
+        win.win.addstr(win.height - 3, win.center_x + 15, list_menu[1][:win.width - 1])
         if self.highlighted_choice is list_menu[1]:
             win.win.attroff(curses.color_pair(3))
 
@@ -378,20 +434,20 @@ class Gui:
 
         win.win.attron(curses.color_pair(1))
         help_width = 39
-        win.win.addstr(1, win.width - help_width,  " __________________________________")
-        win.win.addstr(2, win.width - help_width,  "| Help                             |")
-        win.win.addstr(3, win.width - help_width,  "|                                  |")
-        win.win.addstr(4, win.width - help_width,  "| ENTER : cycle mode on task       |")
-        win.win.addstr(5, win.width - help_width,  "| [ ] : won't be executed          |")
-        win.win.addstr(6, win.width - help_width,  "| [x] : will be executed with user |")
-        win.win.addstr(7, win.width - help_width,  "|       prompt at the end          |")
-        win.win.addstr(8, win.width - help_width,  "| [o] : will be executed without   |")
-        win.win.addstr(9, win.width - help_width,  "|       user prompt at the end     |")
-        win.win.addstr(10, win.width - help_width, "| Tasks will be executed in a      |")
-        win.win.addstr(11, win.width - help_width, "| decreasing priority order        |")
-        win.win.addstr(12, win.width - help_width, "| The highest the priority is, the |")
-        win.win.addstr(13, win.width - help_width, "| soonest it is executed           |")
-        win.win.addstr(14, win.width - help_width, "|__________________________________|")
+        win.win.addstr(1, win.width - help_width,  (" __________________________________")[:win.width-1])
+        win.win.addstr(2, win.width - help_width,  ("| Help                             |")[:win.width-1])
+        win.win.addstr(3, win.width - help_width,  ("|                                  |")[:win.width-1])
+        win.win.addstr(4, win.width - help_width,  ("| ENTER : cycle mode on task       |")[:win.width-1])
+        win.win.addstr(6, win.width - help_width,  ("| [x] : will be executed with user |")[:win.width-1])
+        win.win.addstr(5, win.width - help_width,  ("| [ ] : won't be executed          |")[:win.width-1])
+        win.win.addstr(7, win.width - help_width,  ("|       prompt at the end          |")[:win.width-1])
+        win.win.addstr(8, win.width - help_width,  ("| [o] : will be executed without   |")[:win.width-1])
+        win.win.addstr(9, win.width - help_width,  ("|       user prompt at the end     |")[:win.width-1])
+        win.win.addstr(10, win.width - help_width, ("| Tasks will be executed in a      |")[:win.width-1])
+        win.win.addstr(11, win.width - help_width, ("| decreasing priority order        |")[:win.width-1])
+        win.win.addstr(12, win.width - help_width, ("| The highest the priority is, the |")[:win.width-1])
+        win.win.addstr(13, win.width - help_width, ("| soonest it is executed           |")[:win.width-1])
+        win.win.addstr(14, win.width - help_width, ("|__________________________________|")[:win.width-1])
         win.win.attroff(curses.color_pair(1))
 
     def draw(self, screen, *args):
@@ -427,6 +483,8 @@ class Gui:
     def start_menu(self):
         self.tasktitle = "Start Menu"
 
+        if self.k == curses.KEY_RESIZE:
+            self.draw(self.header, self.draw_startmenu)
         self.draw(self.body, self.draw_listmenu)
         self.draw(self.footer, self.draw_statusbar)
 
@@ -438,6 +496,8 @@ class Gui:
         self.request = request
         self.tasktitle = request
 
+        if self.k == curses.KEY_RESIZE:
+            self.draw(self.header, self.draw_startmenu)
         self.draw(self.body, self.draw_requestmenu)
         self.draw(self.footer, self.draw_statusbar)
 
@@ -470,4 +530,6 @@ class Gui:
         self.stdscr.timeout(200)
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        configPath = sys.argv[1]
     curses.wrapper(Gui)
