@@ -1,16 +1,39 @@
+#!/usr/bin/python
+# Author : Simon CHANU
+# python2 and python3 compatible
+
+"""
+   Copyright 2018 Simon CHANU
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+"""
+
 import sys, os
 import curses
 import ctypes
 import urllib2
 import time
 import subprocess
+import sys
+import yaml
 
+configPath = None
 
 def check_is_admin():
     is_admin = (os.getuid() == 0)
     str_is_admin = "not"
 
-    # print "Script {} connected to internet".format(str_is_admin)
+    # print("Script {} connected to internet".format(str_is_admin)
     return (os.getuid() == 0)
 
 
@@ -43,7 +66,8 @@ class Task:
         self.dic[name]['mode'] = (self.dic[name]['mode'] + 1) % 3
         self.dic[name]['todo'] = (self.dic[name]['mode'] > 0)
         self.dic[name]['ask'] = (self.dic[name]['mode'] == 1)
-        self.win.addstr(0,0,str(self.dic[name]['mode'])[:self.win.width-1])
+        # h, w = self.win.getmaxyx()
+        # self.win.addstr(0,0,str(self.dic[name]['mode'])[:w-1])
         # 0, F, F
         # 1, T, T
         # 2, T, F
@@ -61,8 +85,8 @@ class Task:
         subprocess.call(self.path+'/do.sh', shell=True)
 
         str_end = '[INSTALLER] Task '+str(self.name)+' finished, press key to continue'
-        print '_'*len(str_end)+'\n'
-        print str_end
+        print('_'*len(str_end)+'\n')
+        print(str_end)
 
         curses.reset_prog_mode()
 
@@ -73,10 +97,22 @@ class Task:
         pass
 
 class Installer:
-    def __init__(self, win):
+    def __init__(self, win, configPath=None):
         self.tasks = {}
         self.max_priority = 0
         self.tasks_root = os.path.realpath(__file__)[:-len("cubism.py")]+"/tasks"
+        self.config = None
+
+        # import config
+        if configPath is not None:
+            try:
+                stream = open(configPath, 'r')
+                self.config = yaml.load(stream)
+                stream.close()
+            except (yaml.YAMLError, IOError) as e:
+                self.config = None
+                stream.close()
+                pass
 
         # import task list
         self.import_task_list(win)
@@ -110,6 +146,13 @@ class Installer:
         task_list = os.listdir(self.tasks_root)
         for task in task_list:
             self.tasks[task] = Task(task, self.tasks_root+"/"+task, win)
+            if self.config is not None:
+                if (task in self.config):
+                    for function in ['do', 'undo', 'check']:
+                        if (function in self.config[task]):
+                            for attr in ['mode', 'todo', 'aks']:
+                                if (attr in self.config[task][function]):
+                                    self.tasks[task].dic[function][attr] = self.config[task][function][attr]
 
 
 class Window:
@@ -136,8 +179,8 @@ class Window:
         try:
             self.win.mvwin(self.y, self.x)
         except Exception:
-            print "Valeurs x et y :", self.y, self.x
-            print "Valeurs w et h :", self.width, self.height
+            print("Valeurs x et y : {}, {}".format(self.y, self.x))
+            print("Valeurs w et h : {}, {}".format(self.width, self.height))
 
             k = self.win.getch()
             while (k != ord('q')):
@@ -203,7 +246,7 @@ class Gui:
         width = self.width
         self.footer = Window(height, width, begin_y, begin_x, name="footer")
 
-        self.installer = Installer(self.body.win)
+        self.installer = Installer(self.body.win, configPath)
         self.run()
 
     def run(self):
@@ -269,7 +312,7 @@ class Gui:
         win.win.attroff(curses.color_pair(2))
         win.win.attroff(curses.A_BOLD)
 
-        # Print rest of text
+        # print(rest of text
         win.win.addstr(1, start_x_subtitle, subtitle)
         win.win.addstr(2, (win.width // 2) - 2, '-' * 4)
 
@@ -306,6 +349,16 @@ class Gui:
             if self.highlighted_choice is choice:
                 win.win.attroff(curses.color_pair(3))
 
+        # Render help
+        win.win.attron(curses.color_pair(1))
+        height = win.height - 2
+        x_offset = 22
+        win.win.addstr(height - 3, win.center_x - x_offset, (" _____________________________________________" )[:win.width-1])
+        win.win.addstr(height - 2, win.center_x - x_offset, ("| To import a config file, add its path as an |")[:win.width-1])
+        win.win.addstr(height - 1, win.center_x - x_offset, ("| argument to CuBISM                          |")[:win.width-1])
+        win.win.addstr(height, win.center_x - x_offset,     ("|_____________________________________________|")[:win.width-1])
+        win.win.attroff(curses.color_pair(1))
+
     def draw_responsemenu(self, win):
         # Ce sont les taches qui vont remplir ce menu
         win.win.border()
@@ -314,7 +367,7 @@ class Gui:
         win.win.move(self.cursor_x, self.cursor_y)
 
     def draw_requestmenu(self, win):
-        list_menu = ['cancel', 'execute']
+        list_menu = ['main menu', 'execute']
 
         win.win.border()
 
@@ -477,4 +530,6 @@ class Gui:
         self.stdscr.timeout(200)
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        configPath = sys.argv[1]
     curses.wrapper(Gui)

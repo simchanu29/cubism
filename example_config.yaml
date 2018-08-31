@@ -1,0 +1,30 @@
+# Modes
+#  0 : todo False, ask True
+#  1 : todo True, ask True
+#  2 : todo True, ask False
+
+task_example:
+  do:
+    mode: 1
+    todo: True
+    ask: True
+  undo:
+    mode: 1
+    todo: True
+    ask: True
+  check:
+    mode: 1
+    todo: True
+    ask: True
+
+task_example0:
+  do:
+    mode: 1
+    todo: True
+    ask: True
+
+task_example1:
+  do:
+    mode: 1
+    todo: True
+    ask: True
