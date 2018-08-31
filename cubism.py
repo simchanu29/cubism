@@ -294,8 +294,8 @@ class Gui:
 
     def draw_startmenu(self, win):
         # Declaration of strings
-        title = "Raspberry install manager"[:win.width-1]
-        subtitle = "by Simon CHANU"[:win.width-1]
+        title = "CuBISM"[:win.width-1]
+        subtitle = "Curses Bash Install Scripts Manager"[:win.width-1]
 
         # Centering calculations
         start_x_title = int((win.width // 2) - (len(title) // 2) - len(title) % 2)
