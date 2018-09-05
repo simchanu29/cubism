@@ -148,9 +148,11 @@ class Installer:
             self.tasks[task] = Task(task, self.tasks_root+"/"+task, win)
             if self.config is not None:
                 if (task in self.config):
+                    if ('priority' in self.config[task]):
+                        self.priority = self.config[task]['priority']
                     for function in ['do', 'undo', 'check']:
                         if (function in self.config[task]):
-                            for attr in ['mode', 'todo', 'aks']:
+                            for attr in ['mode', 'todo', 'ask']:
                                 if (attr in self.config[task][function]):
                                     self.tasks[task].dic[function][attr] = self.config[task][function][attr]
 

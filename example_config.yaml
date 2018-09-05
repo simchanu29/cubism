@@ -6,6 +6,7 @@
 # fields can be ommited
 
 task_example:
+  priority: 1
   do:
     mode: 1
     todo: True
